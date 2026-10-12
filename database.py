@@ -38,6 +38,43 @@ def criar_tabelas():
     conexao.close()
 
 
+def cadastrar_produto(codigo, nome, categoria, quantidade, preco, estoque_minimo):
+    conexao = conectar_banco()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        INSERT INTO produtos (codigo, nome, categoria, quantidade, preco, estoque_minimo)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (codigo, nome, categoria, quantidade, preco, estoque_minimo))
+
+    conexao.commit()
+    conexao.close()
+
+
+def listar_produtos():
+    conexao = conectar_banco()
+    cursor = conexao.cursor()
+
+    cursor.execute("SELECT * FROM produtos")
+    produtos = cursor.fetchall()
+
+    conexao.close()
+    return produtos
+
+
 if __name__ == "__main__":
     criar_tabelas()
-    print("Banco de dados e tabelas criados com sucesso!")
+    print("Tabelas verificadas com sucesso!")
+
+    # 1. Verifica se já tem produtos
+    produtos_atuais = listar_produtos()
+
+    # 2. Se não tiver nenhum, cadastra um produto de teste
+    if not produtos_atuais:
+        print("Cadastrando produto de teste...")
+        cadastrar_produto("PRD001", "Caixa de Papelão 50x50", "Embalagens", 100, 4.50, 20)
+
+    # 3. Lista e mostra o que tem no banco
+    print("Produtos no estoque:")
+    for item in listar_produtos():
+        print(item)
