@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from database import cadastrar_produto, listar_produtos, criar_tabelas
+from database import cadastrar_produto, listar_produtos, criar_tabelas, registrar_movimentacao, listar_movimentacoes
 
 # Garante que as tabelas existem ao iniciar
 criar_tabelas()
@@ -48,37 +48,88 @@ m2.metric("🔢 Total de Peças Físicas", f"{total_itens_fisicos:,}".replace(",
 m3.metric("💰 Valor Total do Estoque", f"R$ {valor_total_estoque:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
 st.divider() # Uma linha divisória elegante
-# Subtítulo da seção
-st.subheader("📋 Catálogo de Produtos")
+# --- ABAS PRINCIPAIS ---
+aba_produtos, aba_movimentacoes = st.tabs(["📋 Catálogo de Produtos", "🔄 Movimentações de Estoque"])
 
-# Busca os produtos do banco e monta o DataFrame inicial
-dados_produtos = listar_produtos()
-colunas = ["ID", "Código", "Nome", "Categoria", "Quantidade", "Preço (R$)", "Estoque Mínimo"]
-df_produtos = pd.DataFrame(dados_produtos, columns=colunas)
+with aba_produtos:
+    st.subheader("📋 Catálogo de Produtos")
 
-# --- FILTROS DE PESQUISA ---
-col1, col2 = st.columns([2, 1])
+    # Busca os produtos do banco e monta o DataFrame inicial
+    dados_produtos = listar_produtos()
+    colunas = ["ID", "Código", "Nome", "Categoria", "Quantidade", "Preço (R$)", "Estoque Mínimo"]
+    df_produtos = pd.DataFrame(dados_produtos, columns=colunas)
 
-with col1:
-    termo_busca = st.text_input("🔍 Pesquisar por Código ou Nome", placeholder="Digite para buscar...")
+    # --- FILTROS DE PESQUISA ---
+    col1, col2 = st.columns([2, 1])
 
-with col2:
-    # Pega as categorias existentes no banco e adiciona a opção "Todas"
-    categorias_disponiveis = ["Todas"] + sorted(df_produtos["Categoria"].unique().tolist())
-    categoria_selecionada = st.selectbox("Filtrar por Categoria", categorias_disponiveis)
+    with col1:
+        termo_busca = st.text_input("🔍 Pesquisar por Código ou Nome", placeholder="Digite para buscar...")
 
-# Aplica os filtros no DataFrame
-df_filtrado = df_produtos.copy()
+    with col2:
+        categorias_disponiveis = ["Todas"] + sorted(df_produtos["Categoria"].unique().tolist())
+        categoria_selecionada = st.selectbox("Filtrar por Categoria", categorias_disponiveis)
 
-if termo_busca:
-    for palavra in termo_busca.split():
-        df_filtrado = df_filtrado[
-            df_filtrado["Nome"].str.contains(palavra, case=False, na=False) |
-            df_filtrado["Código"].str.contains(palavra, case=False, na=False)
-        ]
+    # Aplica os filtros no DataFrame
+    df_filtrado = df_produtos.copy()
 
-if categoria_selecionada != "Todas":
-    df_filtrado = df_filtrado[df_filtrado["Categoria"] == categoria_selecionada]
+    if termo_busca:
+        for palavra in termo_busca.split():
+            df_filtrado = df_filtrado[
+                df_filtrado["Nome"].str.contains(palavra, case=False, na=False) |
+                df_filtrado["Código"].str.contains(palavra, case=False, na=False)
+            ]
 
-# Mostra a tabela filtrada
-st.dataframe(df_filtrado, use_container_width=True)
+    if categoria_selecionada != "Todas":
+        df_filtrado = df_filtrado[df_filtrado["Categoria"] == categoria_selecionada]
+
+    # Mostra a tabela filtrada
+    st.dataframe(df_filtrado, use_container_width=True)
+
+
+with aba_movimentacoes:
+    st.subheader("🔄 Registrar Nova Movimentação")
+
+    # Monta a lista de produtos para o operador escolher no menu
+    # Exemplo de opção: "1 - PRD001 | Caixa de Papelão 50x50"
+    dados_produtos = listar_produtos()
+    opcoes_produtos = [f"{p[0]} - {p[1]} | {p[2]}" for p in dados_produtos]
+
+    if not opcoes_produtos:
+        st.warning("Cadastre produtos no catálogo antes de realizar movimentações.")
+    else:
+        with st.form("form_movimentacao", clear_on_submit=True):
+            col_prod, col_tipo, col_qtd = st.columns([2, 1, 1])
+
+            with col_prod:
+                produto_selecionado = st.selectbox("Selecione o Produto", opcoes_produtos)
+
+            with col_tipo:
+                tipo_mov = st.radio("Tipo de Operação", ["SAIDA", "ENTRADA"], horizontal=True)
+
+            with col_qtd:
+                qtd_mov = st.number_input("Quantidade", min_value=1, step=1, value=1)
+
+            obs_mov = st.text_input("Observação (Ex: Venda Pedido #102, NF #4500, Ajuste)")
+            botao_confirmar = st.form_submit_button("Confirmar Movimentação")
+
+            if botao_confirmar:
+                # Pega o ID numérico do produto (que é o primeiro número antes do traço)
+                produto_id = int(produto_selecionado.split(" - ")[0])
+
+                sucesso, mensagem = registrar_movimentacao(produto_id, tipo_mov, int(qtd_mov), obs_mov)
+
+                if sucesso:
+                    st.success(mensagem)
+                    st.rerun()
+                else:
+                    st.error(mensagem)
+
+    st.divider()
+
+    # --- HISTÓRICO DE MOVIMENTAÇÕES ---
+    st.subheader("📜 Histórico de Movimentações")
+    dados_mov = listar_movimentacoes()
+    colunas_mov = ["ID", "Código", "Produto", "Tipo", "Quantidade", "Data e Hora", "Observação"]
+    df_mov = pd.DataFrame(dados_mov, columns=colunas_mov)
+
+    st.dataframe(df_mov, use_container_width=True)
