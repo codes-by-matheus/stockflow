@@ -49,7 +49,7 @@ m3.metric("💰 Valor Total do Estoque", f"R$ {valor_total_estoque:,.2f}".replac
 
 st.divider() # Uma linha divisória elegante
 # --- ABAS PRINCIPAIS ---
-aba_produtos, aba_movimentacoes = st.tabs(["📋 Catálogo de Produtos", "🔄 Movimentações de Estoque"])
+aba_produtos, aba_movimentacoes, aba_dashboard = st.tabs(["📋 Catálogo de Produtos", "🔄 Movimentações de Estoque", "📊 Dashboard & Alertas"])
 
 with aba_produtos:
     st.subheader("📋 Catálogo de Produtos")
@@ -133,3 +133,38 @@ with aba_movimentacoes:
     df_mov = pd.DataFrame(dados_mov, columns=colunas_mov)
 
     st.dataframe(df_mov, use_container_width=True)
+
+
+with aba_dashboard:
+    st.subheader("⚠️ Alertas de Reposição de Estoque")
+
+    # Filtra produtos que atingiram ou estão abaixo do estoque mínimo
+    df_alerta = df_produtos[df_produtos["Quantidade"] <= df_produtos["Estoque Mínimo"]]
+
+    if df_alerta.empty:
+        st.success("✅ Todos os produtos estão com níveis saudáveis de estoque!")
+    else:
+        st.error(f"🚨 Atenção: {len(df_alerta)} produto(s) precisam de reposição urgente!")
+        # Mostra apenas as colunas mais importantes para a compra
+        colunas_alerta = ["Código", "Nome", "Categoria", "Quantidade", "Estoque Mínimo"]
+        st.dataframe(df_alerta[colunas_alerta], use_container_width=True)
+        st.divider()
+    st.subheader("📊 Indicadores Gráficos da Operação")
+
+    # Cria duas colunas para colocar os gráficos lado a lado
+    col_grafico1, col_grafico2 = st.columns(2)
+
+    with col_grafico1:
+        st.markdown("**📦 Peças em Estoque por Categoria**")
+        qtd_por_categoria = df_produtos.groupby("Categoria")["Quantidade"].sum()
+        st.bar_chart(qtd_por_categoria)
+
+    with col_grafico2:
+        st.markdown("**🔄 Volume de Peças: Entradas vs. Saídas**")
+        dados_mov = listar_movimentacoes()
+        if dados_mov:
+            df_mov = pd.DataFrame(dados_mov, columns=["ID", "Código", "Produto", "Tipo", "Quantidade", "Data e Hora", "Observação"])
+            mov_por_tipo = df_mov.groupby("Tipo")["Quantidade"].sum()
+            st.bar_chart(mov_por_tipo)
+        else:
+            st.info("Ainda não há movimentações registradas.")
