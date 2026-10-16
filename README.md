@@ -1,6 +1,6 @@
 # 📦 StockFlow — Inteligência Operacional para Gestão de Estoque
 
-O **StockFlow** é uma aplicação completa desenvolvida para resolver problemas reais de controle de estoque, expedição e logística em pequenas e médias operações. 
+O **StockFlow** é uma aplicação desenvolvida para resolver problemas reais de controle de estoque, expedição e logística em pequenas e médias operações. 
 
 O sistema oferece controle físico e financeiro, rastreabilidade de entradas e saídas, validação de regras de negócio contra saldo negativo e alertas visuais de reposição para evitar rupturas de estoque.
 
