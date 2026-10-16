@@ -6,6 +6,28 @@ O sistema oferece controle físico e financeiro, rastreabilidade de entradas e s
 
 ---
 
+## 📸 Demonstração Visual do Sistema
+
+### 1. Catálogo de Produtos e Indicadores Executivos (KPIs)
+Visão geral com indicadores financeiros e físicos em tempo real, formulário de cadastro com validação na barra lateral e busca inteligente:
+![Catálogo de Produtos](assets/catalogo.png)
+
+---
+
+### 2. Registro Operacional e Histórico de Movimentações
+Lançamento de Entradas e Saídas com justificativa, validação de saldo físico e histórico cronológico consultado via SQL `JOIN`:
+![Movimentações e Histórico](assets/movimentacoes.png)
+
+---
+
+### 3. Inteligência Operacional: Alertas de Reposição e Gráficos
+Identificação automática de itens críticos abaixo do estoque mínimo de segurança e gráficos de distribuição por categoria e fluxo de peças:
+![Alertas de Reposição](assets/alertas.png)
+
+![Gráficos da Operação](assets/graficos.png)
+
+---
+
 ## 🚀 Principais Funcionalidades
 
 - **Gestão de Produtos:** Cadastro detalhado (Código/SKU, Nome, Categoria, Preço, Estoque Inicial e Estoque Mínimo de Alerta) com validação de código único.
@@ -34,6 +56,7 @@ O sistema oferece controle físico e financeiro, rastreabilidade de entradas e s
 - `database.py`: Camada de banco de dados, conexão SQLite e regras de negócio.
 - `requirements.txt`: Lista de dependências do projeto.
 - `.gitignore`: Configuração de arquivos ignorados pelo Git.
+- `assets/`: Imagens e capturas de tela da aplicação em funcionamento.
 - `README.md`: Documentação oficial do projeto.
 
 ---
