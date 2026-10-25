@@ -2,13 +2,11 @@ import streamlit as st
 import pandas as pd
 from database import cadastrar_produto, listar_produtos, criar_tabelas, registrar_movimentacao, listar_movimentacoes
 
-# Garante que as tabelas existem ao iniciar
 criar_tabelas()
 
-# Configuração da página web
 st.set_page_config(page_title="StockFlow", layout="wide")
 st.title("📦 StockFlow — Gestão de Estoque")
-# --- BARRA LATERAL: Formulário de Cadastro ---
+
 with st.sidebar.form("form_novo_produto", clear_on_submit=True):
     st.subheader("➕ Cadastrar Novo Produto")
     
@@ -31,35 +29,31 @@ with st.sidebar.form("form_novo_produto", clear_on_submit=True):
                 st.rerun()
             except Exception:
                 st.error("Erro: Já existe um produto cadastrado com esse código!")
-# --- CARDS DE INDICADORES (KPIs) ---
+
 dados_produtos = listar_produtos()
 colunas = ["ID", "Código", "Nome", "Categoria", "Quantidade", "Preço (R$)", "Estoque Mínimo"]
 df_produtos = pd.DataFrame(dados_produtos, columns=colunas)
 
-# Cálculos rápidos
 total_produtos = len(df_produtos)
 total_itens_fisicos = int(df_produtos["Quantidade"].sum()) if not df_produtos.empty else 0
 valor_total_estoque = float((df_produtos["Quantidade"] * df_produtos["Preço (R$)"]).sum()) if not df_produtos.empty else 0.0
 
-# 3 Colunas de métricas visuais
 m1, m2, m3 = st.columns(3)
 m1.metric("📦 Produtos Cadastrados", total_produtos)
 m2.metric("🔢 Total de Peças Físicas", f"{total_itens_fisicos:,}".replace(",", "."))
 m3.metric("💰 Valor Total do Estoque", f"R$ {valor_total_estoque:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-st.divider() # Uma linha divisória elegante
-# --- ABAS PRINCIPAIS ---
+st.divider()
+
 aba_produtos, aba_movimentacoes, aba_dashboard = st.tabs(["📋 Catálogo de Produtos", "🔄 Movimentações de Estoque", "📊 Dashboard & Alertas"])
 
 with aba_produtos:
     st.subheader("📋 Catálogo de Produtos")
 
-    # Busca os produtos do banco e monta o DataFrame inicial
     dados_produtos = listar_produtos()
     colunas = ["ID", "Código", "Nome", "Categoria", "Quantidade", "Preço (R$)", "Estoque Mínimo"]
     df_produtos = pd.DataFrame(dados_produtos, columns=colunas)
 
-    # --- FILTROS DE PESQUISA ---
     col1, col2 = st.columns([2, 1])
 
     with col1:
@@ -69,7 +63,6 @@ with aba_produtos:
         categorias_disponiveis = ["Todas"] + sorted(df_produtos["Categoria"].unique().tolist())
         categoria_selecionada = st.selectbox("Filtrar por Categoria", categorias_disponiveis)
 
-    # Aplica os filtros no DataFrame
     df_filtrado = df_produtos.copy()
 
     if termo_busca:
@@ -82,15 +75,12 @@ with aba_produtos:
     if categoria_selecionada != "Todas":
         df_filtrado = df_filtrado[df_filtrado["Categoria"] == categoria_selecionada]
 
-    # Mostra a tabela filtrada
     st.dataframe(df_filtrado, use_container_width=True)
 
 
 with aba_movimentacoes:
     st.subheader("🔄 Registrar Nova Movimentação")
 
-    # Monta a lista de produtos para o operador escolher no menu
-    # Exemplo de opção: "1 - PRD001 | Caixa de Papelão 50x50"
     dados_produtos = listar_produtos()
     opcoes_produtos = [f"{p[0]} - {p[1]} | {p[2]}" for p in dados_produtos]
 
@@ -113,7 +103,6 @@ with aba_movimentacoes:
             botao_confirmar = st.form_submit_button("Confirmar Movimentação")
 
             if botao_confirmar:
-                # Pega o ID numérico do produto (que é o primeiro número antes do traço)
                 produto_id = int(produto_selecionado.split(" - ")[0])
 
                 sucesso, mensagem = registrar_movimentacao(produto_id, tipo_mov, int(qtd_mov), obs_mov)
@@ -126,7 +115,6 @@ with aba_movimentacoes:
 
     st.divider()
 
-    # --- HISTÓRICO DE MOVIMENTAÇÕES ---
     st.subheader("📜 Histórico de Movimentações")
     dados_mov = listar_movimentacoes()
     colunas_mov = ["ID", "Código", "Produto", "Tipo", "Quantidade", "Data e Hora", "Observação"]
@@ -138,20 +126,18 @@ with aba_movimentacoes:
 with aba_dashboard:
     st.subheader("⚠️ Alertas de Reposição de Estoque")
 
-    # Filtra produtos que atingiram ou estão abaixo do estoque mínimo
     df_alerta = df_produtos[df_produtos["Quantidade"] <= df_produtos["Estoque Mínimo"]]
 
     if df_alerta.empty:
         st.success("✅ Todos os produtos estão com níveis saudáveis de estoque!")
     else:
         st.error(f"🚨 Atenção: {len(df_alerta)} produto(s) precisam de reposição urgente!")
-        # Mostra apenas as colunas mais importantes para a compra
         colunas_alerta = ["Código", "Nome", "Categoria", "Quantidade", "Estoque Mínimo"]
         st.dataframe(df_alerta[colunas_alerta], use_container_width=True)
         st.divider()
+
     st.subheader("📊 Indicadores Gráficos da Operação")
 
-    # Cria duas colunas para colocar os gráficos lado a lado
     col_grafico1, col_grafico2 = st.columns(2)
 
     with col_grafico1:
