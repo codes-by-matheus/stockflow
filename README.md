@@ -95,3 +95,4 @@ Identificação automática de itens críticos abaixo do estoque mínimo de segu
 
 Desenvolvido por **Matheus da Silva**  
 - GitHub: [codes-by-matheus](https://github.com/codes-by-matheus)
+- - LinkedIn: [Matheus da Silva](https://www.linkedin.com/in/matheusdasilvabarbosa/)
